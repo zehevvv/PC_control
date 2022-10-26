@@ -11,124 +11,72 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+//Stopwatch stopwatch = new Stopwatch();
+//stopwatch.Start();      
+//stopwatch.Stop();
+//Console.WriteLine("Elapsed Time is {0} ms", stopwatch.ElapsedMilliseconds);
+
+
 namespace PC_control
 {
     public partial class Form1 : Form
     {
-        private UdpClient m_udpClient = new UdpClient();
         private int m_Port = 9001;
         private string m_server_name = "orangepizero2";
         private KeepAlive m_keepalive;
+        private Motor_manager motor_Manager;
 
         public Form1()
         {
             InitializeComponent();            
-            m_udpClient.Connect(m_server_name, m_Port);
             m_keepalive = new KeepAlive(m_server_name, m_Port, Server_alive, Server_dead);
-        }
 
-        ~Form1()
-        {
-            m_udpClient.Close();
+            motor_Manager = Motor_manager.Start(m_server_name, m_Port);
+
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyDown);
+            this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyUp);
         }
 
         private void Server_alive()
-        {
-            Console.WriteLine("Server alive");
+        {                  
+            this.Invoke(new MethodInvoker(delegate () {
+                Console.WriteLine("Server alive");
+                m_lbServer_status.BackColor = Color.Green;                
+                m_lbServer_status.Text = "Online";
+            }));
         }
 
         private void Server_dead()
         {
-            Console.WriteLine("Server dead");
+            this.Invoke(new MethodInvoker(delegate () {
+                Console.WriteLine("Server dead");
+                m_lbServer_status.BackColor = Color.Red;
+                m_lbServer_status.Text = "Offline";
+            }));
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
-            Stopwatch stopwatch = new Stopwatch();
-
-            // This constructor arbitrarily assigns the local port number.
-            stopwatch.Start();
-
-            try
-            {
-                // Sends a message to the host to which you have connected.
-                Byte[] sendBytes = Encoding.ASCII.GetBytes("Is anybody there?");
-                m_udpClient.Send(sendBytes, sendBytes.Length);
-
-                //IPEndPoint object will allow us to read datagrams sent from any source.
-                IPEndPoint RemoteIpEndPoint = new IPEndPoint(IPAddress.Any, 0);
-
-                // Blocks until a message returns on this socket from a remote host.
-                Byte[] receiveBytes = m_udpClient.Receive(ref RemoteIpEndPoint);
-                string returnData = Encoding.ASCII.GetString(receiveBytes);
-
-                // Uses the IPEndPoint object to determine which of these two hosts responded.
-                Console.WriteLine("This is the message you received " +returnData.ToString());
-                Console.WriteLine("This message was sent from " + RemoteIpEndPoint.Address.ToString() + " on their port number " + RemoteIpEndPoint.Port.ToString());
-            }
-            catch (Exception e1)
-            {
-                Console.WriteLine(e1.ToString());
-            }
-            stopwatch.Stop();
-
-            Console.WriteLine("Elapsed Time is {0} ms", stopwatch.ElapsedMilliseconds);
-
-            //    try
-            //    {
-            //        String server = "orangepizero2";
-            //        String message = "hello";
-
-
-            //        // Create a TcpClient.
-            //        // Note, for this client to work you need to have a TcpServer
-            //        // connected to the same address as specified by the server, port
-            //        // combination.
-            //        Int32 port = 9001;
-
-            //        // Prefer using declaration to ensure the instance is Disposed later.
-            //        TcpClient client = new TcpClient(server, port);
-
-            //        // Translate the passed message into ASCII and store it as a Byte array.
-            //        Byte[] data = System.Text.Encoding.ASCII.GetBytes(message);
-
-            //        // Get a client stream for reading and writing.
-            //        NetworkStream stream = client.GetStream();
-
-            //        // Send the message to the connected TcpServer.
-            //        stream.Write(data, 0, data.Length);
-
-            //        Console.WriteLine("Sent: {0}", message);
-
-            //        // Receive the server response.
-
-            //        // Buffer to store the response bytes.
-            //        data = new Byte[256];
-
-            //        // String to store the response ASCII representation.
-            //        String responseData = String.Empty;
-
-            //        // Read the first batch of the TcpServer response bytes.
-            //        Int32 bytes = stream.Read(data, 0, data.Length);
-            //        responseData = System.Text.Encoding.ASCII.GetString(data, 0, bytes);
-            //        Console.WriteLine("Received: {0}", responseData);
-
-            //        // Explicit close is not necessary since TcpClient.Dispose() will be
-            //        // called automatically.
-            //        // stream.Close();
-            //        // client.Close();
-            //    }
-            //    catch (ArgumentNullException e1)
-            //    {
-            //        Console.WriteLine("ArgumentNullException: {0}", e1);
-            //    }
-            //    catch (SocketException e2)
-            //    {
-            //        Console.WriteLine("SocketException: {0}", e2);
-            //    }
-
-            //    Console.WriteLine("\n Press Enter to continue...");
-            //    Console.Read();
+            if (e.KeyCode == Keys.Right)
+                motor_Manager.m_arrow_right = true;
+            if (e.KeyCode == Keys.Left)
+                motor_Manager.m_arrow_left = true;
+            if (e.KeyCode == Keys.Up)
+                motor_Manager.m_arrow_up = true;
+            if (e.KeyCode == Keys.Down)
+                motor_Manager.m_arrow_down = true;
         }
+
+        private void Form1_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Right)
+                motor_Manager.m_arrow_right = false;
+            if (e.KeyCode == Keys.Left)
+                motor_Manager.m_arrow_left = false;
+            if (e.KeyCode == Keys.Up)
+                motor_Manager.m_arrow_up = false;
+            if (e.KeyCode == Keys.Down)
+                motor_Manager.m_arrow_down = false;
         }
+    }
 }
