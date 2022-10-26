@@ -24,14 +24,15 @@ namespace PC_control
         private int m_Port = 9001;
         private string m_server_name = "orangepizero2";
         private KeepAlive m_keepalive;
-        private Motor_manager motor_Manager;
+        private Motor_manager m_motor_Manager;
+        private int m_motor_action_time = 5;
 
         public Form1()
         {
             InitializeComponent();            
             m_keepalive = new KeepAlive(m_server_name, m_Port, Server_alive, Server_dead);
 
-            motor_Manager = Motor_manager.Start(m_server_name, m_Port);
+            m_motor_Manager = Motor_manager.Start(m_server_name, m_Port);
 
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyDown);
             this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyUp);
@@ -58,25 +59,47 @@ namespace PC_control
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Right)
-                motor_Manager.m_arrow_right = true;
+                m_motor_Manager.m_arrow_right = true;
             if (e.KeyCode == Keys.Left)
-                motor_Manager.m_arrow_left = true;
+                m_motor_Manager.m_arrow_left = true;
             if (e.KeyCode == Keys.Up)
-                motor_Manager.m_arrow_up = true;
+                m_motor_Manager.m_arrow_up = true;
             if (e.KeyCode == Keys.Down)
-                motor_Manager.m_arrow_down = true;
+                m_motor_Manager.m_arrow_down = true;
         }
 
         private void Form1_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Right)
-                motor_Manager.m_arrow_right = false;
+                m_motor_Manager.m_arrow_right = false;
             if (e.KeyCode == Keys.Left)
-                motor_Manager.m_arrow_left = false;
+                m_motor_Manager.m_arrow_left = false;
             if (e.KeyCode == Keys.Up)
-                motor_Manager.m_arrow_up = false;
+                m_motor_Manager.m_arrow_up = false;
             if (e.KeyCode == Keys.Down)
-                motor_Manager.m_arrow_down = false;
+                m_motor_Manager.m_arrow_down = false;
+        }
+
+        private void m_tbxTime_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void m_tbxTime_TextChanged(object sender, EventArgs e)
+        {
+            if (m_tbxTime.Text.Length > 0)
+            {
+                int num = int.Parse(m_tbxTime.Text);
+                if (num > 100)
+                    m_motor_Manager.m_motor_action_time = 100;
+                else if (num < 5)
+                    m_motor_Manager.m_motor_action_time = 5;
+                else
+                    m_motor_Manager.m_motor_action_time = num;
+            }           
         }
     }
 }

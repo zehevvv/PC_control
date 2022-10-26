@@ -10,6 +10,15 @@ using System.Threading.Tasks;
 
 namespace PC_control
 {
+    enum DIRECTION
+    {
+        UP = 0,
+        DOWN = 1,
+        RIGHT = 2,
+        LEFT = 3
+    };
+
+
     class Motor_manager
     {
         static private Motor_manager m_instance = null;
@@ -23,6 +32,7 @@ namespace PC_control
         public bool m_arrow_left = false;
         public bool m_arrow_up = false;
         public bool m_arrow_down = false;
+        public int m_motor_action_time = 5;
 
         public static Motor_manager Start(string server_name, int port)
         {
@@ -51,13 +61,13 @@ namespace PC_control
                 stopwatch.Start();
 
                 if (m_instance.m_arrow_down)
-                    m_instance.Send_message("DOWN");
+                    m_instance.Send_message(DIRECTION.DOWN);
                 if (m_instance.m_arrow_up)
-                    m_instance.Send_message("UP");
+                    m_instance.Send_message(DIRECTION.UP);
                 if (m_instance.m_arrow_right)
-                    m_instance.Send_message("RIGHT");
+                    m_instance.Send_message(DIRECTION.RIGHT);
                 if (m_instance.m_arrow_left)
-                    m_instance.Send_message("LEFT");
+                    m_instance.Send_message(DIRECTION.LEFT);
 
                 while (stopwatch.ElapsedMilliseconds < 100);
             }    
@@ -82,13 +92,13 @@ namespace PC_control
             m_udp_client.Client.ReceiveTimeout = 100;
         }
 
-        private void Send_message(string msg)
-        {                                          
+        private void Send_message(DIRECTION direction)
+        {
+            Byte[] msg = { 2, (byte)direction, (byte)m_motor_action_time };
             try
             {
-                // Sends a message to the host to which you have connected.
-                Byte[] send_bytes = Encoding.ASCII.GetBytes(msg);
-                m_udp_client.Send(send_bytes, send_bytes.Length);
+                // Sends a message to the host to which you have connected.                
+                m_udp_client.Send(msg, msg.Length);
 
                 //IPEndPoint object will allow us to read datagrams sent from any source.
                 IPEndPoint remote_ip = new IPEndPoint(IPAddress.Any, 0);

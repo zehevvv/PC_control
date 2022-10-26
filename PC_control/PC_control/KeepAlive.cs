@@ -44,7 +44,7 @@ namespace PC_control
                         try
                         {
                             // Sends a message to the host to which you have connected.
-                            Byte[] send_bytes = Encoding.ASCII.GetBytes("1");
+                            Byte[] send_bytes = { 1 };
                             udp_client.Send(send_bytes, send_bytes.Length);
 
                             //IPEndPoint object will allow us to read datagrams sent from any source.
@@ -58,7 +58,7 @@ namespace PC_control
                                 not_alive_event.Invoke();
                                 is_alive = false;
                             }
-                            else if (receive_bytes.Length != 0 && Encoding.ASCII.GetString(receive_bytes).Contains("1") && !is_alive)
+                            else if (receive_bytes.Length != 0 && receive_bytes[0] == 1 && !is_alive)
                             {
                                 alive_event.Invoke();
                                 is_alive = true;
