@@ -22,20 +22,21 @@ namespace PC_control
     public partial class Form1 : Form
     {
         private int m_Port = 9001;
-        private string m_server_name = "orangepizero2";
+        private string m_server_name = "192.168.0.188";
         private KeepAlive m_keepalive;
-        private Motor_manager m_motor_Manager;
-        private int m_motor_action_time = 5;
+        private Motor_manager m_motor_Manager;        
 
         public Form1()
         {
             InitializeComponent();            
-            m_keepalive = new KeepAlive(m_server_name, m_Port, Server_alive, Server_dead);
+            m_keepalive = new KeepAlive(m_server_name, m_Port, Server_alive, Server_dead, Status_update);
 
             m_motor_Manager = Motor_manager.Start(m_server_name, m_Port);
 
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyDown);
             this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyUp);
+
+            m_motor_Manager.m_motor_action_time = int.Parse(m_tbxTime.Text);
         }
 
         private void Server_alive()
@@ -53,6 +54,15 @@ namespace PC_control
                 Console.WriteLine("Server dead");
                 m_lbServer_status.BackColor = Color.Red;
                 m_lbServer_status.Text = "Offline";
+            }));
+        }
+
+        private void Status_update(UInt16 axis_x, UInt16 axis_y, float to_north)
+        {
+            this.Invoke(new MethodInvoker(delegate () {
+                m_lblAxis_x.Text = ((short)axis_x).ToString();
+                m_lblAxis_y.Text = ((short)axis_y).ToString();
+                m_lbTo_north.Text = to_north.ToString();
             }));
         }
 
