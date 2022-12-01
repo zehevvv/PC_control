@@ -37,6 +37,7 @@ namespace PC_control
             this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyUp);
 
             m_motor_Manager.m_motor_action_time = int.Parse(m_tbxTime.Text);
+            Stellarium.Instance();
         }
 
         private void Server_alive()
@@ -57,11 +58,11 @@ namespace PC_control
             }));
         }
 
-        private void Status_update(UInt16 axis_x, UInt16 axis_y, float to_north)
+        private void Status_update(float axis_x, float axis_y, float to_north)
         {
             this.Invoke(new MethodInvoker(delegate () {
-                m_lblAxis_x.Text = ((short)axis_x).ToString();
-                m_lblAxis_y.Text = ((short)axis_y).ToString();
+                m_lblAxis_x.Text = axis_x.ToString();
+                m_lblAxis_y.Text = axis_y.ToString();
                 m_lbTo_north.Text = to_north.ToString();
             }));
         }

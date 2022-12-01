@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace PC_control
 {
     public delegate void Keep_alive_method();
-    public delegate void Status_update(UInt16 axis_x, UInt16 axis_y, float to_north);
+    public delegate void Status_update(float axis_x, float axis_y, float to_north);
 
     class KeepAlive
     {        
@@ -54,9 +54,11 @@ namespace PC_control
                     UInt16 axis_x = BitConverter.ToUInt16(receive_bytes, 0);
                     UInt16 axis_y = BitConverter.ToUInt16(receive_bytes, 2);
                     UInt16 heading_north = BitConverter.ToUInt16(receive_bytes, 4);
+                    float float_axis_x = (float)axis_x / (float)100;
+                    float float_axis_y = (float)axis_y / (float)100;
                     float heading_north_float = (float)heading_north / (float)100;
                     Console.WriteLine(@"status: x = " + axis_x + ", y = " + axis_y + ", heading_north = " + heading_north_float);
-                    status_update_callback(axis_x, axis_y, heading_north_float);
+                    status_update_callback(float_axis_x, float_axis_y, heading_north_float);
                 }
                 else 
                 {

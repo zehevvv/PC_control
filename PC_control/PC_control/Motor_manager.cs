@@ -70,6 +70,7 @@ namespace PC_control
                     m_instance.Send_message(DIRECTION.LEFT);
 
                 while (stopwatch.ElapsedMilliseconds < 100);
+                Thread.Sleep(100);
             }    
         }
 
@@ -86,7 +87,8 @@ namespace PC_control
                 {
                     Console.WriteLine("Monitor therad: " + e1.Message);
                     m_udp_client = null;
-                }
+                    Thread.Sleep(100);
+                }                
             }
 
             m_udp_client.Client.ReceiveTimeout = 100;
@@ -106,6 +108,7 @@ namespace PC_control
                 // Blocks until a message returns on this socket from a remote host.
                 Byte[] receive_bytes = m_udp_client.Receive(ref remote_ip);
                 string msg_recv = Encoding.ASCII.GetString(receive_bytes);
+
                 if (msg_recv.Equals(msg))
                     Console.WriteLine("recv ack:" + msg_recv);
                 else
