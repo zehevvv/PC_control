@@ -6,11 +6,38 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.ComponentModel;
+using Newtonsoft.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
+
+
+//class ExceptionLogger
+//{
+//    Exception _ex;
+
+//    public ExceptionLogger(Exception ex)
+//    {
+//        _ex = ex;
+//    }
+
+//    public void DoLog()
+//    {
+//        Console.WriteLine(_ex.ToString()); //Will display en-US message
+//    }
+//}
+
+//ExceptionLogger el = new ExceptionLogger(ex);
+//System.Threading.Thread t = new System.Threading.Thread(el.DoLog);
+//t.CurrentUICulture = new System.Globalization.CultureInfo("en-US");
+//        t.Start();
+
 
 namespace PC_control
 {
     public delegate void Keep_alive_method();
-    public delegate void Status_update(float axis_x, float axis_y, float to_north);
+    public delegate void Status_update(float azimuth, float altitude);
 
     class KeepAlive
     {        
@@ -36,9 +63,9 @@ namespace PC_control
         public static void get_status(Status_update status_update_callback)
         {                        
             try
-            {
-                //m_mutex.WaitOne();
-                Byte[] send_bytes = { 3 };
+            {                
+                string cmd = "{\"cmd_id\":3}";
+                Byte[] send_bytes = Encoding.ASCII.GetBytes(cmd);
                 m_udp_client.Send(send_bytes, send_bytes.Length);
 
                 //IPEndPoint object will allow us to read datagrams sent from any source.
@@ -46,30 +73,43 @@ namespace PC_control
 
                 // Blocks until a message returns on this socket from a remote host.
                 Byte[] receive_bytes = m_udp_client.Receive(ref remote_ip);
+                string cmd_string = Encoding.ASCII.GetString(receive_bytes);
 
-                //m_mutex.ReleaseMutex();
-
-                if ( receive_bytes.Length == 6 )
+                try
                 {
-                    UInt16 axis_x = BitConverter.ToUInt16(receive_bytes, 0);
-                    UInt16 axis_y = BitConverter.ToUInt16(receive_bytes, 2);
-                    UInt16 heading_north = BitConverter.ToUInt16(receive_bytes, 4);
-                    float float_axis_x = (float)axis_x / (float)100;
-                    float float_axis_y = (float)axis_y / (float)100;
-                    float heading_north_float = (float)heading_north / (float)100;
-                    Console.WriteLine(@"status: x = " + axis_x + ", y = " + axis_y + ", heading_north = " + heading_north_float);
-                    status_update_callback(float_axis_x, float_axis_y, heading_north_float);
+                    dynamic cmd_status = JsonConvert.DeserializeObject(cmd_string);
+                    Console.WriteLine(@"status: azimuth = " + cmd_status.azimuth + ", altitude = " + cmd_status.altitude);
+                    status_update_callback(Convert.ToSingle(cmd_status.azimuth), Convert.ToSingle(cmd_status.altitude));
                 }
-                else 
+                catch (Exception ex)
                 {
-                    Console.WriteLine("Keepalive therad: Get unknown answer");
+                    Console.WriteLine("Keepalive therad: Get unknown answer : " + cmd_string);
                 }
+                
             }
             catch (Exception e1)
             {
-                Console.WriteLine("Keepalive therad: " + e1.Message);
-                //m_mutex.ReleaseMutex();                
+                Console.WriteLine("Keepalive therad get status: " + e1.Message);                
             }            
+        }        
+
+        private static bool Is_cmd_alive(Byte[] receive_bytes)
+        {
+            string cmd_string = Encoding.ASCII.GetString(receive_bytes);            
+
+            try
+            {
+                dynamic stuff = JsonConvert.DeserializeObject(cmd_string);
+                
+                if (stuff.alive == 1)
+                    return true;
+                else
+                    return false;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
 
         private static void Check_server_alive(string server_name, int port, Keep_alive_method alive_event, Keep_alive_method not_alive_event,
@@ -91,9 +131,9 @@ namespace PC_control
 
                             if ( !m_is_alive )
                                 m_udp_client.Connect(server_name, port);
-
-                            // Sends a message to the host to which you have connected.
-                            Byte[] send_bytes = { 1 };
+                            
+                            string cmd = "{\"cmd_id\":1}";
+                            Byte[] send_bytes = Encoding.ASCII.GetBytes(cmd);
                             m_udp_client.Send(send_bytes, send_bytes.Length);
 
                             //IPEndPoint object will allow us to read datagrams sent from any source.
@@ -109,7 +149,7 @@ namespace PC_control
                                 not_alive_event.Invoke();
                                 m_is_alive = false;
                             }
-                            else if (receive_bytes.Length != 0 && receive_bytes[0] == 1 && !m_is_alive)
+                            else if (receive_bytes.Length != 0 && Is_cmd_alive(receive_bytes) && !m_is_alive)
                             {
                                 alive_event.Invoke();
                                 m_is_alive = true;

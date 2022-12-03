@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -96,7 +97,9 @@ namespace PC_control
 
         private void Send_message(DIRECTION direction)
         {
-            Byte[] msg = { 2, (byte)direction, (byte)m_motor_action_time };
+            //Byte[] msg = { 2, (byte)direction, (byte)m_motor_action_time };
+            string cmd = $"{{\"cmd_id\":2,\"direction\":{(byte)direction},\"time\":{(byte)m_motor_action_time}}}";
+            Byte[] msg = Encoding.ASCII.GetBytes(cmd);            
             try
             {
                 // Sends a message to the host to which you have connected.                
@@ -109,10 +112,16 @@ namespace PC_control
                 Byte[] receive_bytes = m_udp_client.Receive(ref remote_ip);
                 string msg_recv = Encoding.ASCII.GetString(receive_bytes);
 
-                if (msg_recv.Equals(msg))
-                    Console.WriteLine("recv ack:" + msg_recv);
-                else
-                    Console.WriteLine("Error: not recv ack");
+                try
+                {
+                    dynamic cmd_ack = JsonConvert.DeserializeObject(msg_recv);
+                    if (cmd_ack.ack != 2)
+                        Console.WriteLine("Motor manager therad: Get unknown ack : " + cmd_ack.ack);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Motor manager therad: Get unknown answer : " + msg_recv);
+                }
             }
             catch (Exception e1)
             {

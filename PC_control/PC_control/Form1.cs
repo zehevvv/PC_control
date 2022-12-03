@@ -58,12 +58,11 @@ namespace PC_control
             }));
         }
 
-        private void Status_update(float axis_x, float axis_y, float to_north)
+        private void Status_update(float azimuth, float altitude)
         {
             this.Invoke(new MethodInvoker(delegate () {
-                m_lblAxis_x.Text = axis_x.ToString();
-                m_lblAxis_y.Text = axis_y.ToString();
-                m_lbTo_north.Text = to_north.ToString();
+                m_lblAzimuth.Text = azimuth.ToString();
+                m_lblAltitude.Text = altitude.ToString();                
             }));
         }
 
