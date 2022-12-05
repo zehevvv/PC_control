@@ -10,6 +10,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using AForge.Video;
 
 //Stopwatch stopwatch = new Stopwatch();
 //stopwatch.Start();      
@@ -21,10 +22,14 @@ namespace PC_control
 {
     public partial class Form1 : Form
     {
+        delegate void NewFrameDelegeta(NewFrameEventArgs args);
         private int m_Port = 9001;
+        private int m_Port_camera = 10001;
         private string m_server_name = "192.168.0.188";
         private KeepAlive m_keepalive;
-        private Motor_manager m_motor_Manager;        
+        private Motor_manager m_motor_Manager;
+        private MJPEGStream m_stream;
+
 
         public Form1()
         {
@@ -46,6 +51,10 @@ namespace PC_control
                 Console.WriteLine("Server alive");
                 m_lbServer_status.BackColor = Color.Green;                
                 m_lbServer_status.Text = "Online";
+
+                m_stream = new MJPEGStream("http://" + m_server_name + ':' + m_Port_camera);
+                m_stream.NewFrame += NewFrameEvent;
+                m_stream.Start();
             }));
         }
 
@@ -55,7 +64,32 @@ namespace PC_control
                 Console.WriteLine("Server dead");
                 m_lbServer_status.BackColor = Color.Red;
                 m_lbServer_status.Text = "Offline";
+
+                m_stream.Stop();                
             }));
+        }
+
+        private void NewFrameEvent(object sender, NewFrameEventArgs eventArgs)
+        {
+            try
+            {
+                if (!this.Disposing && !this.IsDisposed)
+                    this.Invoke(new NewFrameDelegeta(NewFrame), new object[] { eventArgs });
+            }
+            catch (Exception) { }
+        }
+
+        private void NewFrame(NewFrameEventArgs eventArgs)
+        {
+            try
+            {
+                m_pbxScreen.Image = (Image)eventArgs.Frame.Clone();
+                m_pbxScreen.Update();
+                //m_fps_counter++;
+                //lbHeight.Text = "Frame Height : " + eventArgs.Frame.Height;
+                //lbWidth.Text = "Frame Width : " + eventArgs.Frame.Width;
+            }
+            catch (Exception) { }
         }
 
         private void Status_update(float azimuth, float altitude)
